@@ -91,10 +91,14 @@ export class TaskService {
   }
 
   /**
-   * Reorder a task
-   * JWT token is automatically added by AuthInterceptor
+   * Reorder a task within its column.
+   * @param id Task id
+   * @param targetIndex Position in column (0 = first, 1 = second, ...)
+   * @param previousIndex Optional current position; backend uses for validation
    */
-  reorderTask(id: string, newOrder: number): Observable<Task> {
-    return this.http.patch<Task>(`${this.apiUrl}/${id}/reorder`, { order: newOrder });
+  reorderTask(id: string, targetIndex: number, previousIndex?: number): Observable<Task> {
+    const body: { order: number; previousIndex?: number } = { order: targetIndex };
+    if (previousIndex !== undefined) body.previousIndex = previousIndex;
+    return this.http.patch<Task>(`${this.apiUrl}/${id}/reorder`, body);
   }
 }

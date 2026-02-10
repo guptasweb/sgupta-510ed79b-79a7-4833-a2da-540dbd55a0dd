@@ -5,6 +5,7 @@ import { Task, TaskFilters } from '../shared/models';
 import { AppState } from './index';
 import * as TasksActions from './tasks.actions';
 import * as TasksSelectors from './tasks.selectors';
+import type { TaskListSort } from './tasks.reducer';
 
 // Legacy interface for backward compatibility
 export interface ITasksState {
@@ -38,14 +39,30 @@ export class TasksRepository {
     return this.store.select(TasksSelectors.selectTasksFilters);
   }
 
-  // -- Load ------------------------------------------------------------------
-
-  loadTasksRequest(): void {
-    this.store.dispatch(TasksActions.loadTasksRequest());
+  get sort$(): Observable<TaskListSort> {
+    return this.store.select(TasksSelectors.selectTaskListSort);
   }
 
-  loadTasksSuccess(tasks: Task[]): void {
-    this.store.dispatch(TasksActions.loadTasksSuccess({ tasks }));
+  get totalTasks$(): Observable<number> {
+    return this.store.select(TasksSelectors.selectTasksTotal);
+  }
+
+  get page$(): Observable<number> {
+    return this.store.select(TasksSelectors.selectTasksPage);
+  }
+
+  get limit$(): Observable<number> {
+    return this.store.select(TasksSelectors.selectTasksLimit);
+  }
+
+  // -- Load ------------------------------------------------------------------
+
+  loadTasksRequest(payload?: { filters?: TaskFilters; page?: number; limit?: number }): void {
+    this.store.dispatch(TasksActions.loadTasksRequest(payload ?? {}));
+  }
+
+  loadTasksSuccess(tasks: Task[], total: number, page: number, limit: number): void {
+    this.store.dispatch(TasksActions.loadTasksSuccess({ tasks, total, page, limit }));
   }
 
   loadTasksFailure(error: string): void {
@@ -64,6 +81,11 @@ export class TasksRepository {
     this.store.dispatch(TasksActions.updateTaskSuccess({ task }));
   }
 
+  /** Update multiple tasks in place (e.g. after reorder so column order is correct). */
+  updateTasksSuccess(tasks: Task[]): void {
+    this.store.dispatch(TasksActions.updateTasksSuccess({ tasks }));
+  }
+
   // -- Delete ----------------------------------------------------------------
 
   deleteTaskSuccess(taskId: string): void {
@@ -78,6 +100,10 @@ export class TasksRepository {
 
   clearFilters(): void {
     this.store.dispatch(TasksActions.clearFilters());
+  }
+
+  setSort(sortField: TaskListSort['sortField'], sortDirection: TaskListSort['sortDirection']): void {
+    this.store.dispatch(TasksActions.setSort({ sortField, sortDirection }));
   }
 
   // -- Reset -----------------------------------------------------------------

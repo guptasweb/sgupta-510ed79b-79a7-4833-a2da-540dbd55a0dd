@@ -6,7 +6,7 @@ import { Organization } from '../permissions/entities/organization.entity';
 export { TaskStatus, TaskCategory, TaskPriority };
 
 @Entity('tasks')
-@Unique(['organizationId', 'ownerId', 'order'])
+@Unique(['organizationId', 'ownerId', 'status', 'order'])
 export class Task {
   @PrimaryGeneratedColumn('uuid')
   id: string;

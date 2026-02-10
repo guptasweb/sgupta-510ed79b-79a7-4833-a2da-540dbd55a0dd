@@ -1,7 +1,9 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { StoreModule } from '@ngrx/store';
+import { EffectsModule } from '@ngrx/effects';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
+import { TasksEffects } from './store/tasks.effects';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -21,6 +23,7 @@ import { reducers } from './store';
     BrowserModule,
     CommonModule,
     StoreModule.forRoot(reducers),
+    EffectsModule.forRoot([TasksEffects]),
     StoreDevtoolsModule.instrument({
       maxAge: 25,
       logOnly: false,

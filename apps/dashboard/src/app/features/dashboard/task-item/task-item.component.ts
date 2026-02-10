@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { Task, TaskStatus, TaskCategory, TaskPriority } from '../../../shared/models/task.model';
 import { TaskService } from '../task.service';
+import { TasksRepository } from '../../../store/tasks.repository';
 
 @Component({
   selector: 'app-task-item',
@@ -28,7 +29,10 @@ export class TaskItemComponent {
   TaskCategory = TaskCategory;
   TaskPriority = TaskPriority;
 
-  constructor(private taskService: TaskService) {}
+  constructor(
+    private taskService: TaskService,
+    private tasksRepository: TasksRepository
+  ) {}
 
   onEdit(): void {
     this.taskEdited.emit(this.task);
@@ -42,6 +46,7 @@ export class TaskItemComponent {
     this.isDeleting = true;
     this.taskService.deleteTask(this.task.id).subscribe({
       next: () => {
+        this.tasksRepository.deleteTaskSuccess(this.task.id);
         this.taskDeleted.emit(this.task.id);
         this.isDeleting = false;
         this.showDeleteConfirm = false;
@@ -50,7 +55,6 @@ export class TaskItemComponent {
         console.error('Error deleting task:', error);
         this.isDeleting = false;
         this.showDeleteConfirm = false;
-        // You could emit an error event here if needed
       },
     });
   }
@@ -88,6 +92,7 @@ export class TaskItemComponent {
     this.isTogglingStatus = true;
     this.taskService.updateTask(this.task.id, { status: newStatus }).subscribe({
       next: (updatedTask) => {
+        this.tasksRepository.updateTaskSuccess(updatedTask);
         this.task = updatedTask;
         this.taskUpdated.emit(updatedTask);
         this.isTogglingStatus = false;

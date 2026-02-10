@@ -1,11 +1,14 @@
 import { createAction, props } from '@ngrx/store';
 import { Task, TaskFilters } from '../shared/models';
 
-export const loadTasksRequest = createAction('[Tasks] Load Request');
+export const loadTasksRequest = createAction(
+  '[Tasks] Load Request',
+  props<{ filters?: TaskFilters; page?: number; limit?: number }>()
+);
 
 export const loadTasksSuccess = createAction(
   '[Tasks] Load Success',
-  props<{ tasks: Task[] }>()
+  props<{ tasks: Task[]; total: number; page: number; limit: number }>()
 );
 
 export const loadTasksFailure = createAction(
@@ -23,6 +26,12 @@ export const updateTaskSuccess = createAction(
   props<{ task: Task }>()
 );
 
+/** Update multiple tasks (e.g. after reorder so all tasks in the column get new order). */
+export const updateTasksSuccess = createAction(
+  '[Tasks] Update Many Success',
+  props<{ tasks: Task[] }>()
+);
+
 export const deleteTaskSuccess = createAction(
   '[Tasks] Delete Success',
   props<{ taskId: string }>()
@@ -34,5 +43,10 @@ export const setFilters = createAction(
 );
 
 export const clearFilters = createAction('[Tasks] Clear Filters');
+
+export const setSort = createAction(
+  '[Tasks] Set Sort',
+  props<{ sortField: 'date' | 'priority' | 'status'; sortDirection: 'asc' | 'desc' }>()
+);
 
 export const clearTasks = createAction('[Tasks] Clear Tasks');

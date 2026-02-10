@@ -8,6 +8,7 @@ import { TaskFormService } from '../task-form/task-form.service';
 import { Task, TaskStatus, TaskCategory, TaskPriority, TaskFilters } from '../../../shared/models/task.model';
 import { TaskItemComponent } from '../task-item/task-item.component';
 import { AuthRepository } from '../../../store/auth.repository';
+import { TasksRepository } from '../../../store/tasks.repository';
 import { AuthService } from '../../auth/auth.service';
 import { EmptyStateComponent, ErrorBannerComponent, LoadingIndicatorComponent } from '../../../shared/components';
 
@@ -99,6 +100,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
     private taskService: TaskService,
     private taskFormService: TaskFormService,
     private authRepository: AuthRepository,
+    private tasksRepository: TasksRepository,
     private authService: AuthService
   ) {}
 
@@ -110,6 +112,24 @@ export class TaskListComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.tasksRepository.sort$.pipe(takeUntil(this.destroy$)).subscribe((sort) => {
+      this.sortField = sort.sortField;
+      this.sortDirection = sort.sortDirection;
+      if (this.tasks.length > 0) this.applySorting();
+    });
+    this.tasksRepository.tasks$.pipe(takeUntil(this.destroy$)).subscribe((tasks) => {
+      this.tasks = tasks;
+      this.applySorting();
+    });
+    this.tasksRepository.loading$.pipe(takeUntil(this.destroy$)).subscribe((loading) => {
+      this.isLoading = loading;
+    });
+    this.tasksRepository.error$.pipe(takeUntil(this.destroy$)).subscribe((err) => {
+      this.errorMessage = err ?? '';
+    });
+    this.tasksRepository.totalTasks$.pipe(takeUntil(this.destroy$)).subscribe((total) => {
+      this.totalTasks = total;
+    });
     this.checkCreatePermission();
     this.loadTasks();
   }
@@ -188,9 +208,6 @@ export class TaskListComponent implements OnInit, OnDestroy {
   }
 
   loadTasks(): void {
-    this.isLoading = true;
-    this.errorMessage = '';
-
     const filters: TaskFilters = {};
     if (this.statusFilter) {
       filters.status = this.statusFilter as TaskStatus;
@@ -201,22 +218,11 @@ export class TaskListComponent implements OnInit, OnDestroy {
     if (this.searchQuery.trim()) {
       filters.search = this.searchQuery.trim();
     }
-
-    this.taskService
-      .getTasks(filters, this.currentPage, this.pageSize)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          this.tasks = response.tasks;
-          this.totalTasks = response.total;
-          this.applySorting();
-          this.isLoading = false;
-        },
-        error: (error) => {
-          this.errorMessage = error.message || 'Failed to load tasks';
-          this.isLoading = false;
-        },
-      });
+    this.tasksRepository.loadTasksRequest({
+      filters,
+      page: this.currentPage,
+      limit: this.pageSize,
+    });
   }
 
   applySorting(): void {
@@ -266,12 +272,13 @@ export class TaskListComponent implements OnInit, OnDestroy {
   }
 
   onSort(field: SortField): void {
-    if (this.sortField === field) {
-      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-      this.sortField = field;
-      this.sortDirection = 'asc';
-    }
+    const direction =
+      this.sortField === field
+        ? this.sortDirection === 'asc'
+          ? 'desc'
+          : 'asc'
+        : 'asc';
+    this.tasksRepository.setSort(field, direction);
     this.applySorting();
   }
 
@@ -438,25 +445,16 @@ export class TaskListComponent implements OnInit, OnDestroy {
     }
   }
 
-  onTaskUpdated(updatedTask: Task): void {
-    // Update the task in the list
-    const index = this.tasks.findIndex((t) => t.id === updatedTask.id);
-    if (index !== -1) {
-      this.tasks[index] = updatedTask;
-      this.applySorting();
-    }
+  onTaskUpdated(_updatedTask: Task): void {
+    // Store is updated by task-item dispatching updateTaskSuccess; tasks$ subscription will refresh list.
   }
 
-  onTaskDeleted(taskId: string): void {
-    // Remove the task from the list
-    this.tasks = this.tasks.filter((t) => t.id !== taskId);
-    this.filteredTasks = this.filteredTasks.filter((t) => t.id !== taskId);
-    this.totalTasks--;
+  onTaskDeleted(_taskId: string): void {
+    // Store is updated by task-item dispatching deleteTaskSuccess; tasks$ subscription will refresh list.
   }
 
   onTaskEdited(task: Task): void {
     this.taskEditRequested.emit(task);
-    this.loadTasks();
   }
 
   trackByTaskId(index: number, task: Task): string {
@@ -475,7 +473,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
     const movedTask = this.filteredTasks[event.currentIndex];
     const newOrder = event.currentIndex;
     this.taskService.reorderTask(movedTask.id, newOrder).subscribe({
-      next: () => this.loadTasks(),
+      next: (updated) => this.tasksRepository.updateTaskSuccess(updated),
       error: () => this.loadTasks(),
     });
   }

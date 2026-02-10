@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { TaskService, CreateTaskRequest, UpdateTaskRequest } from '../task.service';
 import { Task, TaskStatus, TaskCategory, TaskPriority } from '../../../shared/models/task.model';
 import { AuthRepository } from '../../../store/auth.repository';
+import { TasksRepository } from '../../../store/tasks.repository';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
@@ -32,7 +33,8 @@ export class TaskFormComponent implements OnInit, OnDestroy, OnChanges {
   constructor(
     private fb: FormBuilder,
     private taskService: TaskService,
-    private authRepository: AuthRepository
+    private authRepository: AuthRepository,
+    private tasksRepository: TasksRepository
   ) {
     // Initialize form in constructor to ensure it's available immediately
     this.taskForm = this.fb.group({
@@ -138,6 +140,7 @@ export class TaskFormComponent implements OnInit, OnDestroy, OnChanges {
       };
       this.taskService.updateTask(this.task.id, updateData).subscribe({
         next: (updatedTask) => {
+          this.tasksRepository.updateTaskSuccess(updatedTask);
           this.isSubmitting = false;
           this.taskUpdated.emit(updatedTask);
         },
@@ -158,6 +161,7 @@ export class TaskFormComponent implements OnInit, OnDestroy, OnChanges {
       };
       this.taskService.createTask(createData).subscribe({
         next: (newTask) => {
+          this.tasksRepository.createTaskSuccess(newTask);
           this.isSubmitting = false;
           this.taskCreated.emit(newTask);
         },

@@ -4,6 +4,7 @@ import {
   selectTasksLoading,
   selectTasksError,
   selectTasksFilters,
+  selectTaskListSort,
 } from './tasks.selectors';
 import { TasksState } from './tasks.reducer';
 import { TaskStatus, TaskPriority } from '../shared/models/task.model';
@@ -28,6 +29,10 @@ describe('tasksSelectors', () => {
     loading: true,
     error: 'Failed',
     filters: { status: TaskStatus.PENDING },
+    sort: { sortField: 'date', sortDirection: 'desc' },
+    totalTasks: 1,
+    page: 1,
+    limit: 10,
   };
 
   it('selectTasksState should return tasks state', () => {
@@ -48,5 +53,12 @@ describe('tasksSelectors', () => {
 
   it('selectTasksFilters should return filters', () => {
     expect(selectTasksFilters.projector(initialState)).toEqual({ status: TaskStatus.PENDING });
+  });
+
+  it('selectTaskListSort should return sort', () => {
+    expect(selectTaskListSort.projector(initialState)).toEqual({
+      sortField: 'date',
+      sortDirection: 'desc',
+    });
   });
 });

@@ -8,6 +8,10 @@ describe('tasksReducer', () => {
     loading: false,
     error: null,
     filters: {},
+    sort: { sortField: 'date', sortDirection: 'desc' },
+    totalTasks: 0,
+    page: 1,
+    limit: 10,
   };
 
   it('should return initial state', () => {
@@ -39,11 +43,14 @@ describe('tasksReducer', () => {
     ];
     const state = tasksReducer(
       { ...baseState, loading: true },
-      TasksActions.loadTasksSuccess({ tasks })
+      TasksActions.loadTasksSuccess({ tasks, total: 1, page: 1, limit: 10 })
     );
     expect(state.tasks).toEqual(tasks);
     expect(state.loading).toBe(false);
     expect(state.error).toBeNull();
+    expect(state.totalTasks).toBe(1);
+    expect(state.page).toBe(1);
+    expect(state.limit).toBe(10);
   });
 
   it('should set error on loadTasksFailure', () => {
@@ -132,6 +139,14 @@ describe('tasksReducer', () => {
       TasksActions.clearFilters()
     );
     expect(state.filters).toEqual({});
+  });
+
+  it('should set sort on setSort', () => {
+    const state = tasksReducer(
+      baseState,
+      TasksActions.setSort({ sortField: 'priority', sortDirection: 'asc' })
+    );
+    expect(state.sort).toEqual({ sortField: 'priority', sortDirection: 'asc' });
   });
 
   it('should reset to initial state on clearTasks', () => {

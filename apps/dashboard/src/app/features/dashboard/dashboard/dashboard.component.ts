@@ -9,6 +9,7 @@ import { Task, TaskStatus, TaskCategory, TaskPriority } from '../../../shared/mo
 import { User } from '../../../shared/models';
 import { TaskFormService } from '../task-form/task-form.service';
 import { AuthRepository } from '../../../store/auth.repository';
+import { TasksRepository } from '../../../store/tasks.repository';
 import { AuthService } from '../../auth/auth.service';
 
 type SortField = 'status' | 'priority' | 'date';
@@ -48,6 +49,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   /** Flag to suppress click handler after a drag operation. */
   private justDragged = false;
+
+  /** Prevents double reorder requests and repeated loadTasks when drop fires or callbacks re-trigger. */
+  private reorderInProgress = false;
 
   sortField: SortField | null = 'date';
   sortDirection: SortDirection = 'desc';
@@ -94,6 +98,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private taskFormService: TaskFormService,
     private authRepository: AuthRepository,
+    private tasksRepository: TasksRepository,
     private authService: AuthService,
     private titleService: Title
   ) {}
@@ -102,6 +107,27 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.titleService.setTitle('Dashboard');
     this.errorMessage = '';
     this.connectedColumnIds = this.statusColumns.map((s) => this.getColumnId(s));
+    this.tasksRepository.sort$.pipe(takeUntil(this.destroy$)).subscribe((sort) => {
+      this.sortField = sort.sortField;
+      this.sortDirection = sort.sortDirection;
+      if (this.tasks.length > 0) {
+        this.rebuildDisplayedTasks();
+        this.cdr.markForCheck();
+      }
+    });
+    this.tasksRepository.tasks$.pipe(takeUntil(this.destroy$)).subscribe((tasks) => {
+      this.tasks = tasks;
+      this.rebuildDisplayedTasks();
+      this.cdr.markForCheck();
+    });
+    this.tasksRepository.loading$.pipe(takeUntil(this.destroy$)).subscribe((loading) => {
+      this.isLoading = loading;
+      this.cdr.markForCheck();
+    });
+    this.tasksRepository.error$.pipe(takeUntil(this.destroy$)).subscribe((err) => {
+      this.errorMessage = err ?? '';
+      this.cdr.markForCheck();
+    });
     this.checkCreatePermission();
     this.loadTasks();
   }
@@ -164,42 +190,31 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  /** Refetch tasks when user returns to the tab so changes by others (e.g. owner) are visible. */
+  /** No automatic refetch on tab focus – GET is only called on init and after user actions (reorder, filter, create, update). */
   @HostListener('document:visibilitychange')
   onVisibilityChange(): void {
     if (document.visibilityState === 'hidden') {
       this.wasTabHidden = true;
-    } else if (document.visibilityState === 'visible' && this.wasTabHidden) {
+    } else {
       this.wasTabHidden = false;
-      this.loadTasks();
     }
   }
 
-  loadTasks(): void {
-    this.isLoading = true;
-    this.errorMessage = '';
+  /**
+   * Load tasks via store (effect calls API). Called on init and after filters change.
+   */
+  loadTasks(force = false): void {
+    if (!force && this.isLoading) return;
     const filters: { category?: TaskCategory; search?: string } = {};
     if (this.categoryFilter) filters.category = this.categoryFilter as TaskCategory;
     if (this.searchQuery.trim()) filters.search = this.searchQuery.trim();
-
-    this.taskService
-      .getTasks(filters, 1, 100)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (res) => {
-          this.tasks = res.tasks;
-          this.rebuildDisplayedTasks();
-          this.isLoading = false;
-        },
-        error: (err) => {
-          this.errorMessage = err.message || 'Failed to load tasks';
-          this.isLoading = false;
-        },
-      });
+    this.tasksRepository.loadTasksRequest({ filters, page: 1, limit: 100 });
   }
 
-  /** Build single list and per-status columns from current filters and sort. */
+  /** Build single list and per-status columns from current filters.
+   *  Kanban columns themselves are ordered by the persistent `order` field so drag-and-drop sticks. */
   rebuildDisplayedTasks(): void {
+    // 1) Apply filters
     let source = this.tasks;
     if (this.appliedStatusFilters.size > 0 || this.appliedPriorityFilters.size > 0) {
       source = this.tasks.filter(
@@ -208,13 +223,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
           (this.appliedPriorityFilters.size === 0 || this.appliedPriorityFilters.has(t.priority))
       );
     }
-    const sorted = [...source].sort((a, b) => this.compareTasks(a, b));
-    this.displayedTasks = sorted;
 
-    // Build tasksByStatus for kanban columns (preserve sort order from sorted list)
+    // 2) Compute a globally-sorted list for any list-style usages
+    const sortedForList = [...source].sort((a, b) => this.compareTasks(a, b));
+    this.displayedTasks = sortedForList;
+
+    // 3) Build tasksByStatus for kanban columns.
+    //    Columns are ordered purely by `order` so that drag-and-drop reordering is visible and stable.
     const byStatus: Partial<Record<TaskStatus, Task[]>> = {};
     for (const status of this.statusColumns) {
-      byStatus[status] = sorted.filter((t) => t.status === status);
+      const inStatus = source.filter((t) => t.status === status);
+      byStatus[status] = inStatus.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     }
     this.tasksByStatus = byStatus;
   }
@@ -272,10 +291,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   setSort(field: SortField, direction: SortDirection): void {
     if (this.sortField === field && this.sortDirection === direction) {
-      this.sortField = null;
+      this.sortField = 'date';
+      this.sortDirection = 'desc';
+      this.tasksRepository.setSort('date', 'desc');
     } else {
       this.sortField = field;
       this.sortDirection = direction;
+      this.tasksRepository.setSort(field, direction);
     }
     this.rebuildDisplayedTasks();
     this.showSortDropdown = false;
@@ -441,14 +463,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   deleteTaskInline(task: Task, event: Event): void {
     event.stopPropagation();
     this.closeMenu();
-    
+
     if (confirm(`Are you sure you want to delete "${task.title}"?`)) {
-      this.taskService.deleteTask(task.id)
+      this.taskService
+        .deleteTask(task.id)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
-          next: () => {
-            this.loadTasks();
-          },
+          next: () => this.tasksRepository.deleteTaskSuccess(task.id),
           error: (err) => {
             this.errorMessage = err.message || 'Failed to delete task';
           },
@@ -461,6 +482,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.justDragged = true;
     setTimeout(() => (this.justDragged = false), 100);
 
+    if (this.reorderInProgress) return;
+
     const prevId = event.previousContainer.id;
     const currId = event.container.id;
     const prevStatus = this.getStatusFromColumnId(prevId);
@@ -472,25 +495,63 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const task = prevList[event.previousIndex];
     if (!task) return;
 
+    const previousIndex = event.previousIndex;
+    const targetIndex = event.currentIndex;
     if (event.previousContainer === event.container) {
-      if (event.previousIndex === event.currentIndex) return;
-      moveItemInArray(currList, event.previousIndex, event.currentIndex);
-      const newOrder = this.getGlobalIndex(currStatus, event.currentIndex);
-      this.taskService.reorderTask(task.id, newOrder).subscribe({
-        next: () => this.loadTasks(),
-        error: () => this.loadTasks(),
+      if (previousIndex === targetIndex) return;
+      moveItemInArray(currList, previousIndex, targetIndex);
+    } else {
+      transferArrayItem(prevList, currList, previousIndex, targetIndex);
+    }
+
+    this.reorderInProgress = true;
+    const onDone = () => {
+      this.reorderInProgress = false;
+    };
+    // currList is already in the correct order after moveItemInArray/transferArrayItem.
+    // Sync every task in this column to order = index so the displaced task gets the right order too.
+    const applyResponse = (_updated: Task) => {
+      const updatedColumnTasks = currList.map((item, idx) => ({ ...item, order: idx }));
+      this.tasksRepository.updateTasksSuccess(updatedColumnTasks);
+      this.tasks = this.tasks.map((t) => {
+        if (t.status !== currStatus) return t;
+        const idx = currList.findIndex((item) => item.id === t.id);
+        if (idx === -1) return t;
+        return { ...t, order: idx };
+      });
+      this.rebuildDisplayedTasks();
+      this.cdr.markForCheck();
+    };
+
+    if (event.previousContainer === event.container) {
+      this.taskService.reorderTask(task.id, targetIndex, previousIndex).subscribe({
+        next: (updated) => {
+          applyResponse(updated);
+          onDone();
+        },
+        error: () => {
+          this.loadTasks(true);
+          onDone();
+        },
       });
     } else {
-      transferArrayItem(prevList, currList, event.previousIndex, event.currentIndex);
       this.taskService.updateTask(task.id, { status: currStatus }).subscribe({
         next: () => {
-          const newOrder = this.getGlobalIndex(currStatus, event.currentIndex);
-          this.taskService.reorderTask(task.id, newOrder).subscribe({
-            next: () => this.loadTasks(),
-            error: () => this.loadTasks(),
+          this.taskService.reorderTask(task.id, targetIndex, previousIndex).subscribe({
+            next: (updated) => {
+              applyResponse(updated);
+              onDone();
+            },
+            error: () => {
+              this.loadTasks(true);
+              onDone();
+            },
           });
         },
-        error: () => this.loadTasks(),
+        error: () => {
+          this.loadTasks(true);
+          onDone();
+        },
       });
     }
   }

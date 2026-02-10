@@ -298,25 +298,35 @@ export class TasksService {
 
       const organizationId = task.organizationId;
       const ownerId = task.ownerId;
+      const status = task.status;
 
-      // Load all tasks for this owner in this organization in current order
-      const tasksForOwner = await transactionalEntityManager.find(Task, {
-        where: { organizationId, ownerId },
+      // Load tasks for this owner/org in this status only (per-status order)
+      const tasksInColumn = await transactionalEntityManager.find(Task, {
+        where: { organizationId, ownerId, status },
         order: { order: 'ASC', createdAt: 'ASC' },
       });
 
-      const currentIndex = tasksForOwner.findIndex((t) => t.id === taskId);
+      const currentIndex = tasksInColumn.findIndex((t) => t.id === taskId);
       if (currentIndex === -1) {
-        throw new NotFoundException(`Task with ID ${taskId} not found in owner's task list`);
+        throw new NotFoundException(`Task with ID ${taskId} not found in column`);
       }
 
-      // Clamp target index to valid range. Allow length so "drop after last" works (CDK can send currentIndex === length).
-      let targetIndex = reorderDto.order;
-      if (targetIndex < 0) {
+      if (
+        reorderDto.previousIndex !== undefined &&
+        reorderDto.previousIndex !== currentIndex
+      ) {
+        this.logger.warn(
+          `Reorder previousIndex mismatch: client sent ${reorderDto.previousIndex}, task is at ${currentIndex}`
+        );
+      }
+
+      // reorderDto.order = target index in this column (0 = first, 1 = second, ...). "Put this task here."
+      let targetIndex = Number(reorderDto.order);
+      if (Number.isNaN(targetIndex) || targetIndex < 0) {
         targetIndex = 0;
       }
-      if (targetIndex > tasksForOwner.length) {
-        targetIndex = tasksForOwner.length;
+      if (targetIndex > tasksInColumn.length) {
+        targetIndex = tasksInColumn.length;
       }
 
       if (currentIndex === targetIndex) {
@@ -324,42 +334,43 @@ export class TasksService {
           where: { id: taskId },
           relations: ['owner'],
         });
-        return TaskResponseDto.fromEntity(withOwner ?? task);
+        const entity = withOwner ?? task;
+        const dto = TaskResponseDto.fromEntity(entity);
+        dto.order = currentIndex;
+        return dto;
       }
 
-      // Reorder in-memory (indices within this owner's list)
-      const [moved] = tasksForOwner.splice(currentIndex, 1);
-      tasksForOwner.splice(targetIndex, 0, moved);
+      // Reorder in-memory within this column
+      const [moved] = tasksInColumn.splice(currentIndex, 1);
+      tasksInColumn.splice(targetIndex, 0, moved);
 
-      // Build a map from task id to its final index (0..n-1) in this owner's list
       const finalIndexById = new Map<string, number>();
-      tasksForOwner.forEach((t, index) => {
+      tasksInColumn.forEach((t, index) => {
         finalIndexById.set(t.id, index);
       });
 
-      // Phase 1: move all tasks for this owner/org into a "safe" range above any existing order
-      const existingOrders = tasksForOwner.map((t) => t.order ?? 0);
+      // Phase 1: assign temporary order values to avoid unique (org, owner, status, order) collisions
+      const existingOrders = tasksInColumn.map((t) => t.order ?? 0);
       const maxExistingOrder = existingOrders.length
         ? Math.max(...existingOrders)
         : 0;
-      const offset = maxExistingOrder + tasksForOwner.length + 10;
+      const offset = maxExistingOrder + tasksInColumn.length + 10;
 
-      for (const t of tasksForOwner) {
+      for (const t of tasksInColumn) {
         const finalIndex = finalIndexById.get(t.id)!;
-        // Put each task into a unique high range value so we never collide
         t.order = offset + finalIndex;
         await transactionalEntityManager.save(Task, t);
       }
 
-      // Phase 2: assign final contiguous order values 0..n-1 within this owner's list
-      for (const t of tasksForOwner) {
+      // Phase 2: assign final order 0..n-1 within this status column
+      for (const t of tasksInColumn) {
         const finalIndex = finalIndexById.get(t.id)!;
         t.order = finalIndex;
         await transactionalEntityManager.save(Task, t);
       }
 
       this.logger.log(
-        `Task ${taskId} reordered from index ${currentIndex} to ${targetIndex} by user ${user.id}`
+        `Task ${taskId} reordered in ${status} from index ${currentIndex} to ${targetIndex} by user ${user.id}`
       );
 
       // Reload with owner so response always includes creator display name
@@ -367,7 +378,11 @@ export class TasksService {
         where: { id: taskId },
         relations: ['owner'],
       });
-      return TaskResponseDto.fromEntity(withOwner ?? task);
+      const entity = withOwner ?? task;
+      const dto = TaskResponseDto.fromEntity(entity);
+      // Always set order from our move result: the moved task's new position is targetIndex (never use stale entity.order)
+      dto.order = targetIndex;
+      return dto;
     });
   }
 
@@ -419,33 +434,43 @@ export class TasksService {
   }
 
   /**
-   * Fix duplicate order numbers within each organization
-   * This method should be run once to fix existing data before the unique constraint is applied
+   * Fix duplicate order numbers per (organization, owner, status).
+   * Run once to fix existing data after switching to per-status order.
    */
   async fixDuplicateOrders(): Promise<void> {
-    this.logger.log('Starting to fix duplicate order numbers...');
+    this.logger.log('Starting to fix duplicate order numbers (per status)...');
 
-    // Get all organizations
     const organizations = await this.organizationRepository.find({
       select: ['id'],
     });
 
     for (const org of organizations) {
-      // Get all tasks for this organization ordered by createdAt (to preserve creation order)
       const tasks = await this.taskRepository.find({
         where: { organizationId: org.id },
-        order: { createdAt: 'ASC' },
+        order: { status: 'ASC', order: 'ASC', createdAt: 'ASC' },
       });
 
-      // Reassign order numbers sequentially starting from 0
-      for (let i = 0; i < tasks.length; i++) {
-        if (tasks[i].order !== i) {
-          tasks[i].order = i;
-          await this.taskRepository.save(tasks[i]);
+      // Group by (ownerId, status) and assign order 0..n-1 within each group
+      const key = (t: Task) => `${t.ownerId}:${t.status}`;
+      const groups = new Map<string, Task[]>();
+      for (const t of tasks) {
+        const k = key(t);
+        if (!groups.has(k)) groups.set(k, []);
+        groups.get(k)!.push(t);
+      }
+
+      let updated = 0;
+      for (const [, group] of groups) {
+        for (let i = 0; i < group.length; i++) {
+          if (group[i].order !== i) {
+            group[i].order = i;
+            await this.taskRepository.save(group[i]);
+            updated++;
+          }
         }
       }
 
-      this.logger.log(`Fixed orders for organization ${org.id}: ${tasks.length} tasks reordered`);
+      this.logger.log(`Fixed orders for organization ${org.id}: ${tasks.length} tasks, ${updated} updated`);
     }
 
     this.logger.log('Finished fixing duplicate order numbers');

@@ -1,42 +1,34 @@
-// Wrapper script to handle paths with spaces on Windows
-// This script changes to the workspace root and runs ts-node via npx
-const { execFileSync } = require('child_process');
 const path = require('path');
 
 try {
   // Change to workspace root directory
   const workspaceRoot = path.resolve(__dirname, '../..');
   process.chdir(workspaceRoot);
-  
-  // Use relative paths - these will be resolved from workspace root
-  const mainFile = 'apps/api/src/main.ts';
-  const tsConfig = 'apps/api/tsconfig.app.json';
-  
-  // Resolve ts-node from workspace root to avoid PATH issues
-  const tsNodeBin = require.resolve('ts-node/dist/bin.js', {
-    paths: [workspaceRoot]
-  });
 
-  // Execute synchronously to keep process alive
-  const env = { ...process.env };
-  const nodeOptions = env.NODE_OPTIONS || '';
+  // Ensure ts-node uses the API tsconfig (which extends the base and has path mappings)
+  process.env.TS_NODE_PROJECT =
+    process.env.TS_NODE_PROJECT ||
+    path.resolve(workspaceRoot, 'apps/api/tsconfig.app.json');
+  // Speed up startup; type-checking is handled by Nx/tsc builds
+  process.env.TS_NODE_TRANSPILE_ONLY =
+    process.env.TS_NODE_TRANSPILE_ONLY || 'true';
+
+  // Guard against unquoted Windows paths with spaces in NODE_OPTIONS
+  const nodeOptions = process.env.NODE_OPTIONS || '';
   const hasUnquotedWindowsPathWithSpaces =
     /[A-Za-z]:\\[^"]* [^"]*/.test(nodeOptions);
   if (hasUnquotedWindowsPathWithSpaces) {
-    // Guard against unquoted Windows paths with spaces in NODE_OPTIONS.
-    delete env.NODE_OPTIONS;
+    delete process.env.NODE_OPTIONS;
   }
 
-  execFileSync(
-    process.execPath,
-    [tsNodeBin, '--project', tsConfig, mainFile],
-    {
-      cwd: workspaceRoot,
-      stdio: 'inherit',
-      env
-    }
-  );
+  // Load environment variables and enable TS path mapping + ts-node
+  require('dotenv/config');
+  require('tsconfig-paths/register');
+  require('ts-node/register');
+
+  // Bootstrap the NestJS application (TypeScript entrypoint)
+  require('./src/main');
 } catch (error) {
-  console.error('Failed to start API:', error.message);
+  console.error('Failed to start API:', error);
   process.exit(1);
 }
