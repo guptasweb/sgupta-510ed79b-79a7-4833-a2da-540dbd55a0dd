@@ -283,7 +283,6 @@ All endpoints except `POST /auth/login` and `POST /auth/register` require: `Auth
 | Method | Path | Auth | Permission | Description |
 |--------|------|------|------------|-------------|
 | POST | `/auth/login` | No | - | Login; returns `accessToken`. |
-| POST | `/auth/register` | No | - | Register; returns `accessToken` and user. |
 | GET | `/auth/profile` | JWT | - | Current user profile. |
 | POST | `/tasks` | JWT | task:create | Create a task. |
 | GET | `/tasks` | JWT | task:read | List tasks (filtered by permissions/org/owner). |
@@ -311,39 +310,6 @@ Response (200):
 ```json
 {
   "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
-```
-
-**POST /auth/register**
-
-Request:
-
-```json
-{
-  "email": "newuser@example.com",
-  "password": "password123",
-  "firstName": "Jane",
-  "lastName": "Doe",
-  "roleId": "<uuid-of-role>",
-  "organizationId": "<uuid-of-org>"
-}
-```
-
-Response (201):
-
-```json
-{
-  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": "...",
-    "email": "newuser@example.com",
-    "firstName": "Jane",
-    "lastName": "Doe",
-    "roleId": "...",
-    "organizationId": "...",
-    "createdAt": "...",
-    "updatedAt": "..."
-  }
 }
 ```
 
