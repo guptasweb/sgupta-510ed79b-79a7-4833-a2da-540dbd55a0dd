@@ -1,0 +1,20 @@
+<ng-container *ngIf="showSidebar$ | async; else noSidebar">
+  <div class="app-layout">
+    <app-sidebar></app-sidebar>
+    <main class="app-main">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</ng-container>
+<ng-template #noSidebar>
+  <router-outlet></router-outlet>
+</ng-template>
+
+<!-- Task form modal at app root so it overlays the viewport - always rendered, shown when state is open -->
+<app-task-form
+  *ngIf="taskFormState.open"
+  [task]="taskFormState.task"
+  (taskCreated)="taskFormService.notifyCreated()"
+  (taskUpdated)="taskFormService.notifyUpdated()"
+  (cancelled)="taskFormService.notifyCancel()"
+></app-task-form>

@@ -1,0 +1,235 @@
+/* Task Form Modal Styles */
+.task-form-modal-backdrop {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 99999 !important;
+  background: rgba(0, 0, 0, 0.75) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 1rem !important;
+  overflow-y: auto !important;
+}
+
+.task-form-modal-content {
+  position: relative !important;
+  z-index: 100000 !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 100% !important;
+  max-width: 28rem !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+  background: #2a2118 !important;
+  border: 2px solid rgba(212, 166, 98, 0.3) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+  margin: auto !important;
+}
+
+/* Modal Header */
+.task-form-modal-content > div:first-child {
+  padding: 0.75rem 1rem !important;
+  border-bottom: 2px solid rgba(212, 166, 98, 0.3) !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  background: #312720 !important;
+}
+
+.task-form-modal-content > div:first-child h3 {
+  font-family: 'Libre Baskerville', 'Georgia', serif !important;
+  font-size: 1.125rem !important;
+  font-weight: 700 !important;
+  color: #E8E0D7 !important;
+  margin: 0 !important;
+  text-shadow: 2px 2px 0 rgba(212, 98, 42, 0.2) !important;
+}
+
+.task-form-modal-content > div:first-child button {
+  width: 2rem !important;
+  height: 2rem !important;
+  background: #221B16 !important;
+  border: 2px solid rgba(212, 166, 98, 0.3) !important;
+  color: #A8A097 !important;
+  font-size: 1.125rem !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.15s ease !important;
+  padding: 0 !important;
+}
+
+.task-form-modal-content > div:first-child button:hover {
+  background: rgba(168, 74, 58, 0.2) !important;
+  color: #E45D2E !important;
+  border-color: #E45D2E !important;
+}
+
+/* Modal Form */
+.task-form-modal-content form {
+  padding: 1rem !important;
+  background: #2a2118 !important;
+}
+
+/* Form Fields */
+.task-form-modal-content label {
+  display: block !important;
+  font-size: 0.65rem !important;
+  font-weight: 700 !important;
+  color: #A8A097 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  margin-bottom: 0.375rem !important;
+  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+}
+
+.task-form-modal-content input[type="text"],
+.task-form-modal-content textarea,
+.task-form-modal-content select {
+  width: 100% !important;
+  padding: 0.5rem 0.625rem !important;
+  background: #221B16 !important;
+  border: 2px solid rgba(212, 166, 98, 0.3) !important;
+  color: #E8E0D7 !important;
+  font-size: 0.8125rem !important;
+  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+  transition: all 0.15s ease !important;
+  box-sizing: border-box !important;
+  display: block !important;
+}
+
+.task-form-modal-content input[type="text"]:focus,
+.task-form-modal-content textarea:focus,
+.task-form-modal-content select:focus {
+  outline: none !important;
+  border-color: #E45D2E !important;
+  box-shadow: 0 0 0 2px rgba(212, 98, 42, 0.2), 0 4px 16px rgba(212, 98, 42, 0.3) !important;
+}
+
+.task-form-modal-content input[type="text"]::placeholder,
+.task-form-modal-content textarea::placeholder {
+  color: #A8A097 !important;
+}
+
+.task-form-modal-content textarea {
+  resize: vertical !important;
+  min-height: 72px !important;
+}
+
+.task-form-modal-content select {
+  cursor: pointer !important;
+  appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%23A8A097' d='M6 9L1 4h10z'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 0.5rem center !important;
+  padding-right: 1.75rem !important;
+}
+
+.task-form-modal-content select option {
+  background: #221B16 !important;
+  color: #E8E0D7 !important;
+}
+
+/* Form Field Containers */
+.task-form-modal-content form > div {
+  margin-bottom: 0.875rem !important;
+}
+
+.task-form-modal-backdrop form > div:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Grid Layout */
+.task-form-modal-content .grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 0.75rem !important;
+}
+
+@media (max-width: 768px) {
+  .task-form-modal-content .grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Modal Footer */
+.task-form-modal-backdrop > div > div:last-child {
+  padding: 0.75rem 1rem !important;
+  border-top: 2px solid rgba(212, 166, 98, 0.3) !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 0.5rem !important;
+  background: #312720 !important;
+}
+
+/* Buttons */
+.task-form-modal-content button[type="button"] {
+  padding: 0.5rem 1rem !important;
+  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+  font-size: 0.6875rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  border: 2px solid !important;
+  display: inline-block !important;
+}
+
+.task-form-modal-backdrop button[type="button"]:first-of-type {
+  background: #221B16 !important;
+  color: #E8E0D7 !important;
+  border-color: rgba(212, 166, 98, 0.3) !important;
+}
+
+.task-form-modal-content button[type="button"]:first-of-type:hover {
+  background: rgba(212, 98, 42, 0.1) !important;
+  border-color: #E45D2E !important;
+}
+
+.task-form-modal-backdrop button[type="button"]:last-of-type {
+  background: linear-gradient(180deg, #E45D2E 0%, #BB4C26 100%) !important;
+  color: #FFFFFF !important;
+  border-color: rgba(212, 166, 98, 0.5) !important;
+  box-shadow: 0 4px 16px rgba(212, 98, 42, 0.4) !important;
+}
+
+.task-form-modal-content button[type="button"]:last-of-type:hover:not(:disabled) {
+  opacity: 0.9 !important;
+  box-shadow: 0 6px 20px rgba(212, 98, 42, 0.5) !important;
+}
+
+.task-form-modal-content button[type="button"]:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* Error Message */
+.task-form-modal-content .bg-\[rgba\(168\,74\,58\,0\.15\)\] {
+  background: rgba(168, 74, 58, 0.15) !important;
+  border: 2px solid #A84A3A !important;
+  border-left-width: 4px !important;
+  padding: 0.5rem 0.625rem !important;
+  color: #E45D2E !important;
+  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+  font-size: 0.75rem !important;
+  margin-bottom: 0.875rem !important;
+}
+
+.backdrop-blur-retro {
+  backdrop-filter: blur(30px) saturate(150%);
+  -webkit-backdrop-filter: blur(30px) saturate(150%);
+}
+
+.z-50 {
+  z-index: 50;
+}

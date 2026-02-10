@@ -1,0 +1,143 @@
+<div class="task-card-wrapper">
+  <div
+    class="task-card-draggable task-card-focusable bg-bg-elevated border-2 border-glass-border border-l-4 border-l-accent-burnt p-5 transition-all hover:border-accent-burnt hover:shadow-[0_4px_16px_rgba(212,98,42,0.3)] hover:shadow-[inset_0_1px_0_rgba(255,220,150,0.1)] relative"
+    [class.opacity-60]="isCompleted"
+    tabindex="0"
+    role="article"
+    [attr.aria-label]="'Task: ' + task.title + (canEdit ? '. E edit, Delete or Backspace delete, Space toggle complete.' : '. Space toggle complete.')"
+    (keydown)="onCardKeydown($event)">
+  
+    <!-- Drag Indicator (visual only - shows card is draggable) -->
+    <div class="drag-indicator absolute top-2 right-2 w-8 h-8 flex items-center justify-center text-text-tertiary opacity-50 hover:opacity-100 transition-opacity pointer-events-none z-10"
+         title="Drag card to reorder">
+      <span class="font-mono text-xs">☰</span>
+    </div>
+  
+  <!-- Task Header -->
+  <div class="flex justify-between items-start mb-3">
+    <div class="flex-1 flex items-start gap-3">
+      <!-- Complete/Uncomplete Toggle -->
+      <button
+        type="button"
+        tabindex="-1"
+        (click)="toggleComplete(); $event.stopPropagation()"
+        (mousedown)="$event.stopPropagation(); $event.preventDefault()"
+        [disabled]="isTogglingStatus"
+        class="mt-1 w-5 h-5 border-2 border-glass-border bg-bg-deep flex items-center justify-center transition-all hover:border-accent-burnt hover:bg-[rgba(212,98,42,0.1)] disabled:opacity-50 disabled:cursor-not-allowed"
+        [class.border-accent-sage]="isCompleted"
+        [class.bg-[rgba(125,157,138,0.2)]]="isCompleted"
+        [attr.aria-pressed]="isCompleted"
+        title="{{ isCompleted ? 'Mark as incomplete' : 'Mark as complete' }}"
+      >
+        <span *ngIf="isCompleted" class="text-accent-sage font-bold text-xs">✓</span>
+      </button>
+      
+      <div class="flex-1">
+        <h3 class="text-text-primary font-mono font-bold text-sm mb-1" [class.line-through]="isCompleted" [class.text-text-tertiary]="isCompleted">
+          {{ task.title }}
+        </h3>
+        <!-- Priority Indicator -->
+        <div class="flex items-center gap-2 mt-1">
+          <div [ngClass]="getPriorityIndicatorClass(task.priority)" [title]="task.priority + ' priority'"></div>
+          <span class="text-text-tertiary text-xs font-mono uppercase">{{ task.priority }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Description -->
+  <p *ngIf="task.description" class="text-text-secondary text-xs mb-4 font-mono leading-relaxed ml-8" [class.line-through]="isCompleted">
+    {{ task.description }}
+  </p>
+
+  <!-- Category Badge -->
+  <div class="flex flex-wrap items-center gap-2 mb-4 ml-8">
+    <span [ngClass]="getCategoryBadgeClass(task.category)">{{ task.category || 'Uncategorized' }}</span>
+  </div>
+
+  <!-- Footer with Actions -->
+  <div class="flex justify-between items-center ml-8">
+    <span class="text-text-tertiary text-xs font-mono">{{ task.createdAt | date: 'short' }}</span>
+    
+    <!-- Action Buttons (hidden for viewer) -->
+    <div *ngIf="canEdit" class="flex items-center gap-2">
+      <!-- Edit Button -->
+      <button
+        type="button"
+        tabindex="-1"
+        (click)="onEdit(); $event.stopPropagation()"
+        (mousedown)="$event.stopPropagation(); $event.preventDefault()"
+        class="px-3 py-1.5 bg-bg-warm text-text-primary border-2 border-glass-border font-mono text-xs uppercase tracking-wider font-bold transition-all hover:bg-[rgba(212,98,42,0.1)] hover:border-accent-burnt hover:text-accent-amber"
+        title="Edit task (E)"
+      >
+        Edit
+      </button>
+
+      <!-- Delete Button -->
+      <button
+        type="button"
+        tabindex="-1"
+        (click)="onDelete(); $event.stopPropagation()"
+        (mousedown)="$event.stopPropagation(); $event.preventDefault()"
+        [disabled]="isDeleting"
+        class="px-3 py-1.5 bg-bg-warm text-text-primary border-2 border-glass-border font-mono text-xs uppercase tracking-wider font-bold transition-all hover:bg-[rgba(168,74,58,0.2)] hover:border-accent-rust hover:text-accent-rust disabled:opacity-50 disabled:cursor-not-allowed"
+        title="Delete task (Delete)"
+      >
+        <span *ngIf="!isDeleting">Delete</span>
+        <span *ngIf="isDeleting" class="animate-pulse">Deleting...</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div
+    *ngIf="showDeleteConfirm"
+    class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
+    (click)="cancelDelete()"
+  >
+    <div
+      class="bg-glass-warm backdrop-blur-retro border-2 border-glass-border p-6 max-w-md w-full shadow-retro relative"
+      (click)="$event.stopPropagation()"
+    >
+      <!-- Modal Header -->
+      <div class="mb-4 pb-4 border-b-2 border-glass-border">
+        <h3 class="font-display text-xl font-bold text-text-primary" style="text-shadow: 2px 2px 0 rgba(212, 98, 42, 0.2);">
+          Confirm Deletion
+        </h3>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="mb-6">
+        <p class="text-text-secondary font-mono text-sm mb-2">
+          Are you sure you want to delete this task?
+        </p>
+        <div class="bg-bg-elevated border-2 border-glass-border p-3 mt-3">
+          <p class="text-text-primary font-mono font-bold text-sm">{{ task.title }}</p>
+          <p *ngIf="task.description" class="text-text-secondary font-mono text-xs mt-1">{{ task.description }}</p>
+        </div>
+        <p class="text-text-tertiary font-mono text-xs mt-3 uppercase tracking-wider">
+          This action cannot be undone.
+        </p>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex justify-end gap-3">
+        <button
+          (click)="cancelDelete()"
+          class="px-4 py-2 bg-bg-elevated text-text-primary border-2 border-glass-border font-mono text-xs uppercase tracking-wider font-bold transition-all hover:bg-[rgba(212,98,42,0.1)] hover:border-accent-burnt"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="confirmDelete()"
+          [disabled]="isDeleting"
+          class="px-4 py-2 bg-gradient-to-r from-accent-rust to-accent-burnt text-bg-deep border-2 border-glass-highlight font-mono text-xs uppercase tracking-wider font-bold transition-all hover:shadow-retro-button disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span *ngIf="!isDeleting">Delete</span>
+          <span *ngIf="isDeleting" class="animate-pulse">Deleting...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>

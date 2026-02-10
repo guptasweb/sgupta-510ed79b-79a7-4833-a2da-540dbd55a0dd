@@ -1,0 +1,70 @@
+<div id="login" class="login-container">
+  <div class="login-box">
+    <div class="login-header">
+      <div class="login-logo">TaskFlow.SYS</div>
+      <div class="login-subtitle">System Access Terminal</div>
+    </div>
+
+    <div class="login-body">
+      <div class="terminal-prompt">Initializing authentication protocol...</div>
+
+      <div class="security-notice">
+        Secure connection established. All transmissions are encrypted with military-grade protocols.
+      </div>
+
+      <form
+        [formGroup]="loginForm"
+        (ngSubmit)="onSubmit()"
+        class="login-content active"
+      >
+        <div class="login-form-row-desktop">
+          <div class="login-form-group">
+            <label class="login-label">User ID</label>
+            <input
+              type="text"
+              class="login-input"
+              [class.error]="isFieldInvalid('email')"
+              formControlName="email"
+              placeholder="Enter your username or email"
+              autocomplete="username"
+            />
+            <div *ngIf="isFieldInvalid('email')" class="error-message">
+              {{ getFieldError('email') }}
+            </div>
+          </div>
+          <div class="login-form-group">
+            <label class="login-label">Access Key</label>
+            <input
+              type="password"
+              class="login-input"
+              [class.error]="isFieldInvalid('password')"
+              formControlName="password"
+              placeholder="Enter your password"
+              autocomplete="current-password"
+            />
+            <div *ngIf="isFieldInvalid('password')" class="error-message">
+              {{ getFieldError('password') }}
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="errorMessage" class="error-banner">
+          {{ errorMessage }}
+        </div>
+
+        <button
+          type="submit"
+          class="login-submit"
+          [disabled]="isLoading || !loginForm.get('email')?.value?.trim() || !loginForm.get('password')?.value"
+        >
+          <span *ngIf="!isLoading">Access System</span>
+          <span *ngIf="isLoading">Processing...</span>
+        </button>
+      </form>
+    </div>
+
+    <div class="login-footer">
+      © 2026 TaskFlow Systems • <a href="#" class="login-link">Privacy Policy</a> • <a href="#" class="login-link">Terms</a>
+    </div>
+  </div>
+</div>

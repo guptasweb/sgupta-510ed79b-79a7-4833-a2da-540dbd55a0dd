@@ -1,0 +1,197 @@
+<div id="dashboard" class="dashboard-container bg-bg-deep text-text-primary">
+  <div class="flex flex-col">
+    <!-- Task Board header: SORT, FILTERS, + ADD and pills on the left -->
+    <div class="dashboard-header shrink-0">
+      <div class="dashboard-header-content-wrapper">
+        <div class="dashboard-header-left">
+          <div class="dashboard-sort-container">
+            <button
+              type="button"
+              (click)="showSortDropdown = !showSortDropdown; $event.stopPropagation()"
+              class="dashboard-filters-btn dashboard-sort-btn"
+              [class.dashboard-sort-btn-active]="showSortDropdown"
+            >
+              SORT
+              <span class="dashboard-sort-chevron" [class.dashboard-sort-chevron-open]="showSortDropdown" aria-hidden="true">&#9660;</span>
+            </button>
+            <div *ngIf="showSortDropdown" class="dashboard-sort-dropdown" (click)="$event.stopPropagation()">
+              <div class="dashboard-sort-row">
+                <span class="dashboard-sort-option-label">Status</span>
+                <span class="dashboard-sort-arrows">
+                  <button type="button" class="dashboard-sort-arrow-btn" (click)="setSort('status', 'asc')" title="Ascending" [class.dashboard-sort-arrow-active]="sortField === 'status' && sortDirection === 'asc'">&#8593;</button>
+                  <button type="button" class="dashboard-sort-arrow-btn" (click)="setSort('status', 'desc')" title="Descending" [class.dashboard-sort-arrow-active]="sortField === 'status' && sortDirection === 'desc'">&#8595;</button>
+                </span>
+              </div>
+              <div class="dashboard-sort-row">
+                <span class="dashboard-sort-option-label">Priority</span>
+                <span class="dashboard-sort-arrows">
+                  <button type="button" class="dashboard-sort-arrow-btn" (click)="setSort('priority', 'asc')" title="Ascending" [class.dashboard-sort-arrow-active]="sortField === 'priority' && sortDirection === 'asc'">&#8593;</button>
+                  <button type="button" class="dashboard-sort-arrow-btn" (click)="setSort('priority', 'desc')" title="Descending" [class.dashboard-sort-arrow-active]="sortField === 'priority' && sortDirection === 'desc'">&#8595;</button>
+                </span>
+              </div>
+              <div class="dashboard-sort-row">
+                <span class="dashboard-sort-option-label">Date created</span>
+                <span class="dashboard-sort-arrows">
+                  <button type="button" class="dashboard-sort-arrow-btn" (click)="setSort('date', 'asc')" title="Ascending" [class.dashboard-sort-arrow-active]="sortField === 'date' && sortDirection === 'asc'">&#8593;</button>
+                  <button type="button" class="dashboard-sort-arrow-btn" (click)="setSort('date', 'desc')" title="Descending" [class.dashboard-sort-arrow-active]="sortField === 'date' && sortDirection === 'desc'">&#8595;</button>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="dashboard-filters-container">
+            <button
+              type="button"
+              (click)="toggleFiltersDropdown(); $event.stopPropagation()"
+              class="dashboard-filters-btn dashboard-filters-trigger-btn"
+              [class.dashboard-filters-btn-active]="showFiltersDropdown"
+            >
+              <span class="dashboard-filters-btn-icon" aria-hidden="true">&#9670;</span>
+              FILTERS
+            </button>
+            <div *ngIf="showFiltersDropdown" class="dashboard-filters-dropdown" (click)="$event.stopPropagation()">
+              <div class="dashboard-filters-dropdown-header">
+                <h3 class="dashboard-filters-dropdown-title">Filter Tasks</h3>
+                <button type="button" class="dashboard-filters-clear-btn" (click)="clearAllPanelFilters()">CLEAR ALL</button>
+              </div>
+              <div class="dashboard-filters-dropdown-divider"></div>
+              <div class="dashboard-filters-dropdown-body">
+              <div class="dashboard-filters-section">
+                <button type="button" class="dashboard-filters-section-header" (click)="statusSectionExpanded = !statusSectionExpanded">
+                  <span class="dashboard-filters-section-toggle">{{ statusSectionExpanded ? '\u25BC' : '\u25B6' }}</span>
+                  <span class="dashboard-filters-section-title">STATUS</span>
+                </button>
+                <div *ngIf="statusSectionExpanded" class="dashboard-filters-section-body">
+                  <label *ngFor="let s of allStatuses" class="dashboard-filters-checkbox-row" (click)="toggleStatusFilter(s.value)">
+                    <span class="dashboard-filters-checkbox" [class.dashboard-filters-checkbox-checked]="pendingStatusFilters.has(s.value)">
+                      <span *ngIf="pendingStatusFilters.has(s.value)" class="dashboard-filters-checkmark">&#10003;</span>
+                    </span>
+                    <span class="dashboard-filters-checkbox-icon">{{ s.icon }}</span>
+                    <span class="dashboard-filters-checkbox-label">{{ s.label }}</span>
+                  </label>
+                </div>
+              </div>
+              <div class="dashboard-filters-section">
+                <button type="button" class="dashboard-filters-section-header" (click)="prioritySectionExpanded = !prioritySectionExpanded">
+                  <span class="dashboard-filters-section-toggle">{{ prioritySectionExpanded ? '\u25BC' : '\u25B6' }}</span>
+                  <span class="dashboard-filters-section-title">PRIORITY</span>
+                </button>
+                <div *ngIf="prioritySectionExpanded" class="dashboard-filters-section-body">
+                  <label *ngFor="let p of allPriorities" class="dashboard-filters-checkbox-row" (click)="togglePriorityFilter(p.value)">
+                    <span class="dashboard-filters-checkbox" [class.dashboard-filters-checkbox-checked]="pendingPriorityFilters.has(p.value)">
+                      <span *ngIf="pendingPriorityFilters.has(p.value)" class="dashboard-filters-checkmark">&#10003;</span>
+                    </span>
+                    <span class="dashboard-filters-checkbox-icon">{{ p.icon }}</span>
+                    <span class="dashboard-filters-checkbox-label">{{ p.label }}</span>
+                  </label>
+                </div>
+              </div>
+              </div>
+              <div class="dashboard-filters-dropdown-footer">
+                <button type="button" class="dashboard-filters-cancel-btn" (click)="cancelFiltersDropdown()">CANCEL</button>
+                <button type="button" class="dashboard-filters-apply-btn" (click)="applyPanelFilters()">APPLY FILTERS</button>
+              </div>
+            </div>
+          </div>
+          <button
+            *ngIf="canCreateTask"
+            type="button"
+            (click)="openCreateTaskForm(); $event.stopPropagation()"
+            class="dashboard-add-btn"
+          >
+            + ADD
+          </button>
+          <div *ngIf="sortField" class="dashboard-header-pill-row">
+            <span class="dashboard-sort-pill">{{ getSortPillLabel() }} {{ getSortPillArrow() }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Task list: single list, sorted and filtered by user -->
+    <div class="dashboard-board px-6 py-4 md:px-8 md:py-6 bg-bg-deep mt-6">
+      <div *ngIf="isLoading" class="max-w-7xl mx-auto text-center py-12">
+        <p class="text-text-secondary font-mono text-sm uppercase tracking-wider">Loading tasks...</p>
+      </div>
+
+      <div *ngIf="errorMessage && !isLoading" class="max-w-7xl mx-auto mb-6">
+        <div class="bg-[rgba(168,74,58,0.15)] border border-accent-rust border-l-4 p-4 text-accent-rust font-mono text-sm">
+          {{ errorMessage }}
+        </div>
+      </div>
+
+      <div *ngIf="!isLoading && !errorMessage" class="taskboard-wrapper">
+        <div class="taskboard-columns">
+          <div
+            *ngFor="let status of statusColumns"
+            class="taskboard-column"
+            cdkDropList
+            [id]="getColumnId(status)"
+            [cdkDropListData]="tasksByStatus[status] || []"
+            [cdkDropListConnectedTo]="connectedColumnIds"
+            [cdkDropListDisabled]="!canDrag"
+            (cdkDropListDropped)="onTaskDrop($event)"
+            [attr.aria-label]="getStatusDisplayLabel(status) + ' column'"
+          >
+            <div class="taskboard-column-header">
+              <span class="taskboard-column-title">{{ getStatusDisplayLabel(status).toUpperCase() }}</span>
+              <span class="taskboard-column-count">{{ (tasksByStatus[status] || []).length }}</span>
+            </div>
+            <div class="taskboard-column-cards">
+              <div
+                *ngFor="let task of (tasksByStatus[status] || [])"
+                class="task-card"
+                cdkDrag
+                [cdkDragData]="task"
+                [cdkDragDisabled]="!canDrag"
+                (click)="onCardClick(task)"
+                [style.cursor]="canDrag ? 'pointer' : 'default'"
+              >
+                <!-- Always-present handle so CDK only drags from here; card and menu stay clickable (hidden for viewer) -->
+                <div *ngIf="canDrag" cdkDragHandle class="task-card-grip" title="Drag to move"></div>
+                <div class="task-card-accent-bar"></div>
+                <div class="task-card-square-top"></div>
+                <div class="task-card-square-bottom"></div>
+                <div class="task-card-content">
+                  <div class="task-card-header">
+                    <div class="task-card-header-content">
+                      <div class="task-card-title">{{ task.title }}</div>
+                      <div *ngIf="canDrag" class="task-card-menu-container" (click)="$event.stopPropagation()">
+                        <button
+                          type="button"
+                          (click)="toggleMenu(task.id, $event)"
+                          class="task-card-menu-btn"
+                          title="Menu"
+                        >
+                          ☰
+                        </button>
+                        <div
+                          *ngIf="openMenuTaskId === task.id"
+                          class="task-card-dropdown"
+                          (click)="$event.stopPropagation()"
+                        >
+                          <button type="button" (click)="openEditTaskForm(task); $event.stopPropagation()" class="task-card-dropdown-item">Edit</button>
+                          <button type="button" (click)="deleteTaskInline(task, $event)" class="task-card-dropdown-item task-card-dropdown-item-danger">Delete</button>
+                        </div>
+                      </div>
+                    </div>
+                    <div *ngIf="task.description" class="task-card-description">{{ task.description }}</div>
+                    <div class="task-card-creator">By {{ getCreatorDisplayName(task) }}</div>
+                  </div>
+                  <div class="task-card-footer">
+                    <div class="task-card-footer-normal">
+                      <span [ngClass]="getCategoryBadgeColorClass(task.category)" class="task-card-work-button task-card-status-badge">{{ getCategoryLabel(task.category) }}</span>
+                      <span [ngClass]="getPriorityBadgeColorClass(task.priority)" class="task-card-work-button task-card-status-badge">{{ getPriorityLabel(task.priority) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="displayedTasks.length === 0" class="taskboard-empty">
+          <p class="text-text-tertiary font-mono text-xs uppercase tracking-wider">No tasks</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

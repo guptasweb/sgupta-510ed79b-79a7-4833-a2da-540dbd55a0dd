@@ -1,0 +1,117 @@
+<div id="audit-logs" class="audit-container bg-bg-deep text-text-primary">
+  <div class="flex flex-col">
+    <!-- Page header: title and subtitle only -->
+    <div class="audit-header shrink-0">
+      <div class="audit-header-content-wrapper">
+        <div class="audit-header-top">
+          <div class="audit-header-title-row">
+            <h1 class="audit-title">Audit Logs</h1>
+            <p class="audit-subtitle">SYSTEM ACTIVITY TRAIL</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="audit-body">
+      <app-loading-indicator *ngIf="isLoading" message="Loading audit logs..."></app-loading-indicator>
+      <app-error-banner *ngIf="errorMessage && !isLoading" [message]="errorMessage"></app-error-banner>
+
+      <div *ngIf="!isLoading && !errorMessage">
+        <div *ngIf="logs.length > 0" class="audit-table-wrapper">
+          <table class="audit-table">
+            <thead>
+              <tr class="audit-table-head-row">
+                <th class="audit-th audit-th-time">TIMESTAMP</th>
+                <th class="audit-th audit-th-user">USER</th>
+                <th class="audit-th audit-th-action">ACTION</th>
+                <th class="audit-th audit-th-details">DETAILS</th>
+                <th class="audit-th audit-th-ip">IP ADDRESS</th>
+                <th class="audit-th audit-th-status">STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let log of logs; trackBy: trackByLogId"
+                class="audit-table-row"
+              >
+                <td class="audit-td audit-td-time">
+                  <span class="audit-date">{{ log.timestamp | date: 'MMM dd, yyyy' }}</span>
+                  <span class="audit-time">{{ log.timestamp | date: 'HH:mm:ss' }}</span>
+                </td>
+                <td class="audit-td audit-td-user">
+                  <div class="audit-user-cell">
+                    <span class="audit-user-avatar" [style.background]="getAvatarColor(log)">{{ getInitials(log) }}</span>
+                    <div class="audit-user-info">
+                      <span class="audit-user-name">{{ getUserName(log) }}</span>
+                      <span class="audit-user-role">{{ getUserRole(log) }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="audit-td audit-td-action">
+                  <span class="audit-action-cell" [class]="'audit-action-' + getActionType(log)">
+                    <span class="audit-action-icon" [innerHTML]="getActionIcon(log)"></span>
+                    <span class="audit-action-text">{{ getActionLabel(log) }}</span>
+                  </span>
+                </td>
+                <td class="audit-td audit-td-details">
+                  <span class="audit-details-text">{{ getDetailsText(log) }}</span>
+                  <ng-container *ngIf="getDetailsPill(log) as pill">
+                    <span class="audit-details-pill">{{ pill }}</span>
+                  </ng-container>
+                </td>
+                <td class="audit-td audit-td-ip">
+                  <span class="audit-ip">–</span>
+                </td>
+                <td class="audit-td audit-td-status">
+                  <span class="audit-status" [ngClass]="'audit-status-' + getStatus(log)">
+                    <span class="audit-status-icon">{{ getStatusIcon(getStatus(log)) }}</span>
+                    {{ getStatusLabel(getStatus(log)) }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <app-empty-state
+          *ngIf="logs.length === 0"
+          message="No audit logs found"
+        ></app-empty-state>
+
+        <div *ngIf="logs.length > 0" class="audit-pagination">
+          <span class="audit-pagination-info">Showing {{ rangeStart }}-{{ rangeEnd }} of {{ total }} entries</span>
+          <div class="audit-pagination-controls">
+            <button
+              type="button"
+              class="audit-page-btn"
+              (click)="onPageChange(page - 1)"
+              [disabled]="page <= 1"
+              aria-label="Previous page"
+            >
+              &#9664;
+            </button>
+            <ng-container *ngFor="let p of pageNumbers; trackBy: trackByPage">
+              <button
+                type="button"
+                class="audit-page-btn"
+                [class.audit-page-btn-active]="p === page"
+                (click)="onPageChange(p)"
+              >
+                {{ p }}
+              </button>
+            </ng-container>
+            <button
+              type="button"
+              class="audit-page-btn"
+              (click)="onPageChange(page + 1)"
+              [disabled]="page >= totalPages"
+              aria-label="Next page"
+            >
+              &#9654;
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,690 @@
+/* Retro Futurism Animations */
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+@keyframes sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+.animate-sweep {
+  animation: sweep 4s linear infinite;
+}
+
+/* Clip path for retro angular design */
+.clip-path-retro {
+  clip-path: polygon(0 0, 100% 0, 98% 100%, 2% 100%);
+}
+
+/* Mobile-first responsive adjustments */
+@media (max-width: 768px) {
+  .clip-path-retro {
+    clip-path: none;
+  }
+}
+
+/* Drag and Drop List Styles */
+.cdk-drop-list {
+  min-height: 100px;
+}
+
+/* Drag wrapper styling */
+.drag-wrapper {
+  display: block;
+  cursor: grab !important;
+  cursor: -webkit-grab !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+  touch-action: none !important;
+}
+
+.drag-wrapper:active,
+.drag-wrapper.cdk-drag-dragging {
+  cursor: grabbing !important;
+  cursor: -webkit-grabbing !important;
+}
+
+.drag-wrapper.cdk-drag {
+  cursor: grab !important;
+}
+
+/* Make component inside non-interactive for drag */
+.drag-wrapper > app-task-item {
+  pointer-events: none;
+}
+
+/* But allow buttons to work */
+.drag-wrapper > app-task-item button {
+  pointer-events: auto !important;
+}
+
+/* Ensure draggable items are properly styled - FORCE IT */
+::ng-deep [cdkDrag],
+::ng-deep .cdk-drag {
+  cursor: grab !important;
+  cursor: -webkit-grab !important;
+  cursor: move !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+  touch-action: none !important;
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+::ng-deep [cdkDrag]:hover,
+::ng-deep .cdk-drag:hover {
+  cursor: grab !important;
+  cursor: -webkit-grab !important;
+  cursor: move !important;
+}
+
+::ng-deep [cdkDrag]:active,
+::ng-deep [cdkDrag].cdk-drag-dragging,
+::ng-deep .cdk-drag:active,
+::ng-deep .cdk-drag.cdk-drag-dragging {
+  cursor: grabbing !important;
+  cursor: -webkit-grabbing !important;
+  cursor: move !important;
+}
+
+/* Prevent text selection when starting to drag */
+::ng-deep .cdk-drag.cdk-drag-disabled {
+  cursor: default;
+}
+
+/* Prevent text selection when dragging */
+::ng-deep .cdk-drag-dragging {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  touch-action: none;
+}
+
+/* Drag preview styling */
+::ng-deep .cdk-drag-preview {
+  box-sizing: border-box;
+  border-radius: 0;
+  box-shadow: 
+    0 8px 32px rgba(212, 98, 42, 0.5),
+    inset 0 2px 0 rgba(255, 220, 150, 0.2),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.3);
+  opacity: 0.95;
+  background: #3a2f24;
+  border: 2px solid #d4622a;
+  transform: rotate(1deg);
+  cursor: grabbing !important;
+}
+
+/* Placeholder styling */
+::ng-deep .cdk-drag-placeholder {
+  opacity: 0.4;
+  background: rgba(212, 98, 42, 0.15);
+  border: 2px dashed rgba(212, 166, 98, 0.5);
+  border-left: 4px dashed rgba(212, 166, 98, 0.5);
+}
+
+/* Animation for items being dragged */
+::ng-deep .cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* Animation for other items when dragging */
+::ng-deep .cdk-drop-list-dragging app-task-item:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* Drag handle indicator */
+::ng-deep .cdk-drag-handle {
+  cursor: grab;
+  cursor: -webkit-grab;
+}
+
+::ng-deep .cdk-drag-handle:active {
+  cursor: grabbing;
+  cursor: -webkit-grabbing;
+}
+
+/* =============================================
+   Filter Toolbar Buttons
+   ============================================= */
+
+.filter-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  box-sizing: border-box;
+  height: calc(0.625rem * 2 + 1em);
+  line-height: 1;
+  background: #221B16;
+  border: 2px solid rgba(212, 166, 98, 0.3);
+  color: #A8A097;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.filter-toolbar-btn:hover {
+  background: rgba(34, 27, 22, 0.8);
+  border-color: rgba(212, 166, 98, 0.5);
+  color: #E8E0D7;
+}
+
+.filter-toolbar-btn-active {
+  border: 2px solid #d4622a;
+  color: #E8E0D7;
+  background: rgba(42, 33, 24, 0.95);
+}
+
+.filter-toolbar-btn-icon {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.filter-toolbar-add-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.625rem 1rem;
+  height: calc(0.625rem * 2 + 1em);
+  box-sizing: border-box;
+  line-height: 1;
+  background: linear-gradient(to right, var(--accent-burnt, #d4622a), var(--accent-rust, #a84a3a));
+  color: #fff;
+  border: 2px solid rgba(212, 166, 98, 0.5);
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-toolbar-add-btn:hover {
+  opacity: 0.9;
+}
+
+.filter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.3rem;
+  background: #d4622a;
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  border-radius: 2px;
+  line-height: 1;
+}
+
+/* =============================================
+   Filter Pill (active filter indicators)
+   ============================================= */
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.65rem;
+  background: rgba(212, 98, 42, 0.2);
+  border: 1px solid rgba(212, 166, 98, 0.4);
+  color: #E8E0D7;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* =============================================
+   Filter Dropdown Wrapper (positioning context)
+   ============================================= */
+
+.filter-dropdown-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* =============================================
+   Click-away backdrop
+   ============================================= */
+
+.filter-dropdown-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+/* =============================================
+   Filter Dropdown Panel
+   ============================================= */
+
+.filter-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: 380px;
+  max-height: 80vh;
+  background: #2a2118;
+  border: 1px solid rgba(212, 166, 98, 0.25);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.3);
+  animation: dropdownSlide 0.15s ease;
+  overflow: hidden;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Right-side accent bar (matching screenshot) */
+.filter-dropdown-accent {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 5px;
+  background: linear-gradient(180deg, #d4622a 0%, #c45520 50%, #a84a3a 100%);
+  z-index: 2;
+}
+
+/* =============================================
+   Panel Tabs
+   ============================================= */
+
+.filter-panel-tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(212, 166, 98, 0.2);
+  flex-shrink: 0;
+}
+
+.filter-panel-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.85rem 0.75rem;
+  background: #221B16;
+  border: none;
+  color: #A8A097;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-bottom: 2px solid transparent;
+}
+
+.filter-panel-tab:hover {
+  color: #E8E0D7;
+  background: rgba(34, 27, 22, 0.8);
+}
+
+.filter-panel-tab-active {
+  color: #E8E0D7;
+  background: #2a2118;
+  border-bottom-color: #d4622a;
+}
+
+.filter-panel-tab-icon {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+/* =============================================
+   Panel Body
+   ============================================= */
+
+.filter-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem 1.25rem 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: #d4622a rgba(212, 166, 98, 0.15);
+}
+
+.filter-panel-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.filter-panel-body::-webkit-scrollbar-track {
+  background: rgba(212, 166, 98, 0.15);
+}
+
+.filter-panel-body::-webkit-scrollbar-thumb {
+  background: #d4622a;
+  border-radius: 2px;
+}
+
+.filter-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.filter-panel-title {
+  font-family: 'Libre Baskerville', 'Georgia', serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #E8E0D7;
+  margin: 0;
+}
+
+.filter-panel-clear-btn {
+  padding: 0.35rem 0.65rem;
+  background: transparent;
+  border: 1px solid rgba(212, 166, 98, 0.35);
+  color: #A8A097;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-panel-clear-btn:hover {
+  color: #E8E0D7;
+  border-color: rgba(212, 166, 98, 0.5);
+  background: rgba(212, 166, 98, 0.25);
+}
+
+.filter-panel-divider {
+  height: 1px;
+  background: rgba(212, 166, 98, 0.2);
+  margin-bottom: 1rem;
+}
+
+/* =============================================
+   Filter Section (collapsible)
+   ============================================= */
+
+.filter-panel-section {
+  margin-bottom: 1rem;
+}
+
+.filter-panel-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  background: rgba(212, 166, 98, 0.06);
+  border: 1px solid rgba(212, 166, 98, 0.2);
+  color: #d4622a;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.filter-panel-section-header:hover {
+  background: rgba(212, 166, 98, 0.12);
+  border-color: rgba(212, 166, 98, 0.25);
+}
+
+.filter-panel-section-toggle {
+  font-size: 0.6rem;
+  line-height: 1;
+  color: #d4622a;
+}
+
+.filter-panel-section-title {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #d4622a;
+}
+
+.filter-panel-section-body {
+  padding: 0.5rem 0;
+}
+
+/* =============================================
+   Checkbox Rows
+   ============================================= */
+
+.filter-panel-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.85rem;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  border-bottom: 1px solid rgba(212, 166, 98, 0.06);
+}
+
+.filter-panel-checkbox-row:hover {
+  background: rgba(212, 98, 42, 0.08);
+}
+
+.filter-panel-checkbox-row:last-child {
+  border-bottom: none;
+}
+
+.filter-panel-checkbox {
+  width: 1.15rem;
+  height: 1.15rem;
+  border: 2px solid rgba(212, 166, 98, 0.35);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.filter-panel-checkbox-checked {
+  background: rgba(212, 98, 42, 0.25);
+  border-color: rgba(212, 166, 98, 0.5);
+}
+
+.filter-panel-checkmark {
+  color: #4ade80;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.filter-panel-checkbox-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+  width: 1.15rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.filter-panel-checkbox-label {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #E8E0D7;
+}
+
+/* =============================================
+   Sort Options
+   ============================================= */
+
+.filter-panel-sort-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.filter-panel-sort-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: rgba(212, 166, 98, 0.05);
+  border: 1px solid rgba(212, 166, 98, 0.15);
+  color: #E8E0D7;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-panel-sort-btn:hover {
+  background: rgba(212, 98, 42, 0.1);
+  border-color: rgba(212, 166, 98, 0.3);
+}
+
+.filter-panel-sort-btn-active {
+  background: rgba(212, 98, 42, 0.2);
+  border-color: #d4622a;
+}
+
+.filter-panel-sort-label {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.filter-panel-sort-dir {
+  font-size: 1rem;
+  color: #d4622a;
+  font-weight: 700;
+}
+
+/* =============================================
+   Panel Footer
+   ============================================= */
+
+.filter-panel-footer {
+  display: flex;
+  gap: 0.6rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid rgba(212, 166, 98, 0.2);
+  background: #221B16;
+  flex-shrink: 0;
+}
+
+.filter-panel-cancel-btn {
+  flex: 1;
+  padding: 0.65rem 0.75rem;
+  background: #221B16;
+  border: 2px solid rgba(212, 166, 98, 0.3);
+  color: #A8A097;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-panel-cancel-btn:hover {
+  color: #E8E0D7;
+  border-color: rgba(212, 166, 98, 0.5);
+}
+
+.filter-panel-apply-btn {
+  flex: 1.5;
+  padding: 0.65rem 0.75rem;
+  background: linear-gradient(180deg, #E45D2E 0%, #BB4C26 100%);
+  border: 2px solid rgba(228, 93, 46, 0.5);
+  color: #FFFFFF;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-panel-apply-btn:hover {
+  opacity: 0.9;
+  box-shadow: 0 2px 8px rgba(228, 93, 46, 0.4);
+}
+
+/* =============================================
+   Mobile responsive
+   ============================================= */
+
+@media (max-width: 640px) {
+  .filter-dropdown {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-height: 85vh;
+    border: none;
+    border-top: 2px solid rgba(212, 166, 98, 0.3);
+    animation: dropdownSlideUp 0.2s ease;
+  }
+
+  @keyframes dropdownSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .filter-dropdown-accent {
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: auto;
+    width: 100%;
+    height: 3px;
+  }
+}

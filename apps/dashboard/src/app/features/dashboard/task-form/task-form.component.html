@@ -1,0 +1,113 @@
+<div class="task-form-modal-backdrop" (click)="onCancel()">
+  <div class="task-form-modal-content" (click)="$event.stopPropagation()">
+    <!-- Modal Header -->
+    <div class="p-6 md:p-8 border-b-2 border-glass-border flex justify-between items-center">
+      <h3 class="font-display text-2xl md:text-3xl font-bold text-text-primary" style="text-shadow: 2px 2px 0 rgba(212, 98, 42, 0.2);">
+        {{ task ? 'Edit Task' : 'Create New Task' }}
+      </h3>
+      <button
+        (click)="onCancel()"
+        class="w-12 h-12 bg-bg-elevated border-2 border-glass-border text-text-secondary text-2xl cursor-pointer transition-all hover:bg-[rgba(168,74,58,0.2)] hover:text-accent-rust hover:border-accent-rust hover:rotate-90 hover:shadow-[0_4px_16px_rgba(168,74,58,0.3)] flex items-center justify-center font-display"
+      >
+        ×
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <form [formGroup]="taskForm" (ngSubmit)="onSubmit()" class="p-6 md:p-8">
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="mb-6 bg-[rgba(168,74,58,0.15)] border-2 border-accent-rust border-l-4 p-4 text-accent-rust font-mono text-sm">
+        {{ errorMessage }}
+      </div>
+
+      <!-- Task Title -->
+      <div class="mb-6">
+        <label class="block text-xs font-bold text-text-secondary mb-2.5 uppercase tracking-wider font-mono">
+          ▸ Task Title *
+        </label>
+        <input
+          type="text"
+          formControlName="title"
+          class="w-full p-3.5 md:p-4 bg-bg-elevated border-2 border-glass-border text-text-primary text-sm transition-all font-mono focus:outline-none focus:border-accent-burnt focus:shadow-[0_0_0_2px_rgba(212,98,42,0.2),0_4px_16px_rgba(212,98,42,0.3)]"
+          placeholder="Enter task title"
+        />
+        <p *ngIf="isFieldInvalid('title')" class="mt-1 text-xs text-accent-rust font-mono">
+          {{ getFieldError('title') }}
+        </p>
+      </div>
+
+      <!-- Description -->
+      <div class="mb-6">
+        <label class="block text-xs font-bold text-text-secondary mb-2.5 uppercase tracking-wider font-mono">
+          ▸ Description
+        </label>
+        <textarea
+          formControlName="description"
+          rows="3"
+          class="w-full p-3.5 md:p-4 bg-bg-elevated border-2 border-glass-border text-text-primary text-sm transition-all font-mono focus:outline-none focus:border-accent-burnt focus:shadow-[0_0_0_2px_rgba(212,98,42,0.2),0_4px_16px_rgba(212,98,42,0.3)] resize-none"
+          placeholder="Add task description..."
+        ></textarea>
+      </div>
+
+      <!-- Type -->
+      <div class="mb-6">
+        <label class="block text-xs font-bold text-text-secondary mb-2.5 uppercase tracking-wider font-mono">
+          ▸ Type
+        </label>
+        <select
+          formControlName="category"
+          class="w-full p-3.5 md:p-4 bg-bg-elevated border-2 border-glass-border text-text-primary text-sm transition-all font-mono focus:outline-none focus:border-accent-burnt focus:shadow-[0_0_0_2px_rgba(212,98,42,0.2)]"
+        >
+          <option [value]="null">Select type</option>
+          <option *ngFor="let cat of categoryOptions" [value]="cat.value">{{ cat.label }}</option>
+        </select>
+      </div>
+
+      <!-- Priority -->
+      <div class="mb-6">
+        <label class="block text-xs font-bold text-text-secondary mb-2.5 uppercase tracking-wider font-mono">
+          ▸ Priority *
+        </label>
+        <select
+          formControlName="priority"
+          class="w-full p-3.5 md:p-4 bg-bg-elevated border-2 border-glass-border text-text-primary text-sm transition-all font-mono focus:outline-none focus:border-accent-burnt focus:shadow-[0_0_0_2px_rgba(212,98,42,0.2)]"
+        >
+          <option *ngFor="let pri of priorityOptions" [value]="pri.value">{{ pri.label }}</option>
+        </select>
+      </div>
+
+      <!-- Status -->
+      <div class="mb-6">
+        <label class="block text-xs font-bold text-text-secondary mb-2.5 uppercase tracking-wider font-mono">
+          ▸ Status *
+        </label>
+        <select
+          formControlName="status"
+          class="w-full p-3.5 md:p-4 bg-bg-elevated border-2 border-glass-border text-text-primary text-sm transition-all font-mono focus:outline-none focus:border-accent-burnt focus:shadow-[0_0_0_2px_rgba(212,98,42,0.2)]"
+        >
+          <option *ngFor="let status of statusOptions" [value]="status.value">{{ status.label }}</option>
+        </select>
+      </div>
+    </form>
+
+    <!-- Modal Footer -->
+    <div class="p-6 md:p-8 border-t-2 border-glass-border flex justify-end gap-3">
+      <button
+        type="button"
+        (click)="onCancel()"
+        class="px-7 py-3.5 bg-bg-elevated text-text-primary border-2 border-glass-border font-mono text-xs uppercase tracking-wider font-bold transition-all hover:bg-[rgba(212,98,42,0.1)] hover:border-accent-burnt"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        (click)="onSubmit()"
+        [disabled]="isSubmitting || taskForm.invalid"
+        class="px-7 py-3.5 bg-gradient-to-r from-accent-burnt to-accent-rust text-bg-deep border-2 border-glass-highlight font-mono text-xs uppercase tracking-wider font-bold transition-all shadow-retro-button hover:shadow-retro-button-hover disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <span *ngIf="!isSubmitting">{{ task ? 'Update' : 'Create' }}</span>
+        <span *ngIf="isSubmitting" class="animate-pulse">Processing...</span>
+      </button>
+    </div>
+  </div>
+</div>

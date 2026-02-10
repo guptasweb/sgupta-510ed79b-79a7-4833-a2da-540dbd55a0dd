@@ -1,0 +1,292 @@
+<div class="min-h-screen bg-bg-deep text-text-primary p-4 md:p-8 relative z-10" [class.min-h-0]="embedded">
+  <!-- Header (hidden when embedded in dashboard) -->
+  <div *ngIf="!embedded" class="max-w-7xl mx-auto mb-8">
+    <div class="bg-glass-warm backdrop-blur-retro border-2 border-glass-border p-8 md:p-12 shadow-retro relative clip-path-retro">
+      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-accent-burnt via-accent-amber via-accent-teal to-transparent animate-sweep"></div>
+      <h1 class="font-display text-4xl md:text-5xl font-bold text-text-primary mb-4 tracking-wide" style="text-shadow: 2px 2px 0 rgba(212, 98, 42, 0.3), 4px 4px 0 rgba(42, 125, 125, 0.2);">
+        TASKFLOW.SYS
+        <span class="text-accent-amber animate-blink">█</span>
+      </h1>
+      <p class="text-text-secondary text-sm uppercase tracking-widest font-mono">Terminal Management Interface</p>
+    </div>
+  </div>
+
+  <!-- Toolbar: Search, Sort, Filters, Add (hidden when embedded in dashboard) -->
+  <div *ngIf="!embedded" class="max-w-7xl mx-auto mb-6">
+    <div class="bg-glass-warm backdrop-blur-retro border-2 border-glass-border p-6 shadow-retro-card">
+      <div class="flex flex-wrap items-center gap-4">
+        <!-- Search -->
+        <div class="flex-1 min-w-[200px]">
+          <div class="flex items-center gap-3 bg-bg-deep border-2 border-glass-border p-3 focus-within:border-accent-burnt focus-within:shadow-[0_0_0_2px_rgba(212,98,42,0.2),0_4px_16px_rgba(212,98,42,0.3)] transition-all">
+            <span class="text-text-tertiary font-mono">&#9654;</span>
+            <input
+              type="text"
+              [(ngModel)]="searchQuery"
+              (ngModelChange)="onSearch()"
+              placeholder="Search tasks..."
+              class="flex-1 bg-transparent border-none outline-none text-text-primary font-mono text-sm placeholder-text-tertiary"
+            />
+          </div>
+        </div>
+
+        <!-- Sort / Filters dropdown wrapper -->
+        <div class="filter-dropdown-wrapper">
+          <!-- Sort Button -->
+          <button
+            (click)="openSortPanel(); $event.stopPropagation()"
+            class="filter-toolbar-btn"
+            [class.filter-toolbar-btn-active]="showFilterPanel && filterPanelTab === 'sort'"
+          >
+            <span class="filter-toolbar-btn-icon">&#8597;</span>
+            SORT
+          </button>
+
+          <!-- Filters Button -->
+          <button
+            (click)="openFilterPanel(); $event.stopPropagation()"
+            class="filter-toolbar-btn"
+            [class.filter-toolbar-btn-active]="hasActiveFilters || (showFilterPanel && filterPanelTab === 'filters')"
+          >
+            <span class="filter-toolbar-btn-icon">&#9670;</span>
+            FILTERS
+            <span *ngIf="activeFilterCount > 0" class="filter-badge">{{ activeFilterCount }}</span>
+          </button>
+
+          <!-- Dropdown Panel: content depends on which button opened it (Sort or Filters) -->
+          <div
+            *ngIf="showFilterPanel"
+            class="filter-dropdown"
+            (click)="$event.stopPropagation()"
+          >
+            <!-- Right accent bar -->
+            <div class="filter-dropdown-accent"></div>
+
+            <!-- Sort Content (when opened via SORT button) -->
+            <div *ngIf="filterPanelTab === 'sort'" class="filter-panel-body">
+              <div class="filter-panel-header">
+                <h3 class="filter-panel-title">Sort Tasks</h3>
+              </div>
+              <div class="filter-panel-divider"></div>
+
+              <div class="filter-panel-section">
+                <div class="filter-panel-sort-options">
+                  <button
+                    (click)="onSort('date')"
+                    class="filter-panel-sort-btn"
+                    [class.filter-panel-sort-btn-active]="sortField === 'date'"
+                  >
+                    <span class="filter-panel-sort-label">Date</span>
+                    <span class="filter-panel-sort-dir" *ngIf="sortField === 'date'">
+                      {{ sortDirection === 'asc' ? '\u2191' : '\u2193' }}
+                    </span>
+                  </button>
+                  <button
+                    (click)="onSort('priority')"
+                    class="filter-panel-sort-btn"
+                    [class.filter-panel-sort-btn-active]="sortField === 'priority'"
+                  >
+                    <span class="filter-panel-sort-label">Priority</span>
+                    <span class="filter-panel-sort-dir" *ngIf="sortField === 'priority'">
+                      {{ sortDirection === 'asc' ? '\u2191' : '\u2193' }}
+                    </span>
+                  </button>
+                  <button
+                    (click)="onSort('status')"
+                    class="filter-panel-sort-btn"
+                    [class.filter-panel-sort-btn-active]="sortField === 'status'"
+                  >
+                    <span class="filter-panel-sort-label">Status</span>
+                    <span class="filter-panel-sort-dir" *ngIf="sortField === 'status'">
+                      {{ sortDirection === 'asc' ? '\u2191' : '\u2193' }}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Filters Content -->
+            <div *ngIf="filterPanelTab === 'filters'" class="filter-panel-body">
+              <div class="filter-panel-header">
+                <h3 class="filter-panel-title">Filter Tasks</h3>
+                <button
+                  class="filter-panel-clear-btn"
+                  (click)="clearAllPanelFilters()"
+                >
+                  CLEAR ALL
+                </button>
+              </div>
+              <div class="filter-panel-divider"></div>
+
+              <!-- Status Section -->
+              <div class="filter-panel-section">
+                <button
+                  class="filter-panel-section-header"
+                  (click)="statusSectionExpanded = !statusSectionExpanded"
+                >
+                  <span class="filter-panel-section-toggle">{{ statusSectionExpanded ? '\u25BC' : '\u25B6' }}</span>
+                  <span class="filter-panel-section-title">STATUS</span>
+                </button>
+                <div *ngIf="statusSectionExpanded" class="filter-panel-section-body">
+                  <label
+                    *ngFor="let s of allStatuses"
+                    class="filter-panel-checkbox-row"
+                    (click)="toggleStatusFilter(s.value)"
+                  >
+                    <span
+                      class="filter-panel-checkbox"
+                      [class.filter-panel-checkbox-checked]="pendingStatusFilters.has(s.value)"
+                    >
+                      <span *ngIf="pendingStatusFilters.has(s.value)" class="filter-panel-checkmark">&#10003;</span>
+                    </span>
+                    <span class="filter-panel-checkbox-icon">{{ s.icon }}</span>
+                    <span class="filter-panel-checkbox-label">{{ s.label }}</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Priority Section -->
+              <div class="filter-panel-section">
+                <button
+                  class="filter-panel-section-header"
+                  (click)="prioritySectionExpanded = !prioritySectionExpanded"
+                >
+                  <span class="filter-panel-section-toggle">{{ prioritySectionExpanded ? '\u25BC' : '\u25B6' }}</span>
+                  <span class="filter-panel-section-title">PRIORITY</span>
+                </button>
+                <div *ngIf="prioritySectionExpanded" class="filter-panel-section-body">
+                  <label
+                    *ngFor="let p of allPriorities"
+                    class="filter-panel-checkbox-row"
+                    (click)="togglePriorityFilter(p.value)"
+                  >
+                    <span
+                      class="filter-panel-checkbox"
+                      [class.filter-panel-checkbox-checked]="pendingPriorityFilters.has(p.value)"
+                    >
+                      <span *ngIf="pendingPriorityFilters.has(p.value)" class="filter-panel-checkmark">&#10003;</span>
+                    </span>
+                    <span class="filter-panel-checkbox-icon">{{ p.icon }}</span>
+                    <span class="filter-panel-checkbox-label">{{ p.label }}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="filter-panel-footer">
+              <button class="filter-panel-cancel-btn" (click)="cancelFilterPanel()">
+                CANCEL
+              </button>
+              <button class="filter-panel-apply-btn" (click)="applyPanelFilters()">
+                APPLY FILTERS
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Task -->
+        <button
+          *ngIf="canCreateTask"
+          type="button"
+          (click)="openCreateTaskForm()"
+          class="filter-toolbar-add-btn"
+        >
+          + ADD
+        </button>
+      </div>
+
+      <!-- Active filter pills -->
+      <div *ngIf="hasActiveFilters" class="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-glass-border">
+        <span class="text-text-tertiary text-xs uppercase tracking-wider font-mono font-bold mr-2">Active:</span>
+        <span
+          *ngFor="let s of allStatuses"
+          class="filter-pill"
+          [class.hidden]="!appliedStatusFilters.has(s.value)"
+        >
+          {{ s.label }}
+        </span>
+        <span
+          *ngFor="let p of allPriorities"
+          class="filter-pill"
+          [class.hidden]="!appliedPriorityFilters.has(p.value)"
+        >
+          {{ p.label }}
+        </span>
+        <button
+          (click)="clearFilters()"
+          class="text-accent-rust text-xs font-mono font-bold uppercase tracking-wider hover:text-accent-burnt transition-colors ml-2"
+        >
+          Clear All
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Click-away backdrop for dropdown -->
+  <div
+    *ngIf="showFilterPanel"
+    class="filter-dropdown-backdrop"
+    (click)="closeFilterPanel()"
+  ></div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="max-w-7xl mx-auto">
+    <app-loading-indicator message="Loading tasks..."></app-loading-indicator>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="errorMessage && !isLoading" class="max-w-7xl mx-auto mb-6">
+    <app-error-banner [message]="errorMessage"></app-error-banner>
+  </div>
+
+  <!-- Task List -->
+  <div *ngIf="!isLoading && !errorMessage" class="max-w-7xl mx-auto">
+    <!-- Grid View with Drag and Drop -->
+    <div 
+      cdkDropList
+      [cdkDropListDisabled]="!canDrag"
+      (cdkDropListDropped)="drop($event)"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8"
+    >
+      <div 
+        *ngFor="let task of filteredTasks; trackBy: trackByTaskId; let i = index"
+        cdkDrag
+        [cdkDragData]="task"
+        [cdkDragDisabled]="!canDrag"
+        class="drag-wrapper"
+        [attr.data-index]="i">
+        <app-task-item
+          [task]="task"
+          [canEdit]="canDrag"
+          (taskUpdated)="onTaskUpdated($event)"
+          (taskDeleted)="onTaskDeleted($event)"
+          (taskEdited)="onTaskEdited($event)"
+        ></app-task-item>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <app-empty-state *ngIf="filteredTasks.length === 0" message="No tasks found"></app-empty-state>
+
+    <!-- Pagination -->
+    <div *ngIf="totalPages > 1" class="flex justify-center items-center gap-2 mt-8">
+      <button
+        (click)="onPageChange(currentPage - 1)"
+        [disabled]="currentPage === 1"
+        class="px-4 py-2 bg-bg-elevated text-text-primary border-2 border-glass-border font-mono text-xs uppercase tracking-wider font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[rgba(212,98,42,0.1)] hover:border-accent-burnt transition-all"
+      >
+        Previous
+      </button>
+      <span class="text-text-secondary font-mono text-sm px-4">
+        Page {{ currentPage }} of {{ totalPages }}
+      </span>
+      <button
+        (click)="onPageChange(currentPage + 1)"
+        [disabled]="currentPage === totalPages"
+        class="px-4 py-2 bg-bg-elevated text-text-primary border-2 border-glass-border font-mono text-xs uppercase tracking-wider font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[rgba(212,98,42,0.1)] hover:border-accent-burnt transition-all"
+      >
+        Next
+      </button>
+    </div>
+  </div>
+</div>
